@@ -7,7 +7,11 @@ trackers.
 It translates the subtitle track you **already turn on** in the player (CC) — it
 does not transcribe audio.
 
-![icon](icons/icon128.png)
+## Screenshots
+
+<img src="docs/screenshots/popup.png" alt="Popup" width="320">
+
+<img src="docs/screenshots/options.png" alt="Options page" width="760">
 
 ## How it works
 
