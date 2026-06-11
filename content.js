@@ -50,12 +50,22 @@
   // --- Оверлей ---------------------------------------------------------------
 
   function ensureOverlay() {
-    if (overlayEl && document.documentElement.contains(overlayEl)) return overlayEl;
-    overlayEl = document.createElement("div");
-    overlayEl.id = "pvst-overlay";
-    overlayEl.setAttribute("aria-hidden", "true");
-    document.documentElement.appendChild(overlayEl);
+    if (!overlayEl || !overlayEl.isConnected) {
+      overlayEl = document.createElement("div");
+      overlayEl.id = "pvst-overlay";
+      overlayEl.setAttribute("aria-hidden", "true");
+    }
+    relocateOverlay();
     return overlayEl;
+  }
+
+  // В полноэкранном режиме рендерится только fullscreen-элемент и его потомки.
+  // Оверлей в documentElement в честном fullscreen перекрывается top-layer'ом и
+  // пропадает — поэтому держим его внутри document.fullscreenElement, когда он есть.
+  function relocateOverlay() {
+    if (!overlayEl) return;
+    const host = document.fullscreenElement || document.documentElement;
+    if (overlayEl.parentElement !== host) host.appendChild(overlayEl);
   }
 
   function applyOverlayStyle() {
@@ -251,6 +261,11 @@
   });
 
   // --- Запуск ----------------------------------------------------------------
+
+  // При входе/выходе из полноэкранного режима переносим оверлей в нужный хост.
+  document.addEventListener("fullscreenchange", () => {
+    if (settings.enabled) relocateOverlay();
+  });
 
   loadSettings(() => {
     applyEnabledState();
