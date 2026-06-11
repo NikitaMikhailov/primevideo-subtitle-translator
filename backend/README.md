@@ -1,72 +1,66 @@
-# Бэкенд-прокси (Cloudflare Worker → Google Cloud Translation)
+# Backend proxy (Cloudflare Worker → Google Cloud Translation)
 
-Зачем нужен: расширение в Web Store нельзя публиковать с зашитым API-ключом
-Google (его извлекут из кода). Прокси держит ключ в секрете, а расширение
-обращается к прокси. Заодно прокси даёт CORS-ограничение (только расширение),
-rate-limit и единую точку контроля расходов.
+Why it exists: the extension can't ship with a hardcoded Google API key (it would
+be extracted from the code). The proxy keeps the key in a secret, and the
+extension talks to the proxy. The proxy also adds a CORS restriction (extension
+only), rate limiting, and a single place to control spending.
 
-Эта инструкция нужна, если ты разворачиваешь **свой** прокси (вместо общего
-сервера по умолчанию) — чтобы не зависеть от общего сервера и его лимитов, а
-расходы Google шли на твой проект. Адрес своего воркера указывается в попапе в
-поле «Свой прокси-сервер».
+You deploy your **own** proxy and put its URL into the extension options
+("Translation server URL"), so Google costs stay on your own account.
 
-## 1. Получить ключ Google Cloud Translation
+## 1. Get a Google Cloud Translation API key
 
-1. Создай проект в https://console.cloud.google.com/
-2. Включи **Cloud Translation API**.
+1. Create a project at https://console.cloud.google.com/
+2. Enable the **Cloud Translation API**.
 3. APIs & Services → Credentials → **Create credentials → API key**.
-4. Ограничь ключ: **API restrictions → Cloud Translation API** (важно).
-   Application restriction оставь «None» — ключ всё равно живёт только в воркере.
+4. Restrict the key: **API restrictions → Cloud Translation API** (important).
+   Leave Application restrictions = "None" — the key lives only in the worker.
+5. Make sure **billing** is enabled on the project (the free tier still requires it).
 
-## 2. Задеплоить воркер
+## 2. Deploy the worker
 
 ```bash
 cd backend
 npx wrangler login
-npx wrangler secret put GOOGLE_API_KEY   # вставить ключ из шага 1
+npx wrangler secret put GOOGLE_API_KEY   # paste the key from step 1 (hidden)
 npx wrangler deploy
 ```
 
-После `deploy` ты получишь URL вида
+After `deploy` you get a URL like
 `https://pv-subtitle-translator.<subdomain>.workers.dev`.
 
-## 3. Подключить к расширению
+## 3. Connect it to the extension
 
-Скопируй этот URL в попап расширения → поле **«Свой прокси-сервер»**.
-Готово — переводы пойдут через твой Google Cloud.
+Paste that URL into the extension options → **Translation server URL**.
+Done — translations now go through your Google Cloud.
 
-## Стоимость
+## Cost
 
-Google Cloud Translation: первые 500 000 символов/мес бесплатно, далее ~$20 за
-1 млн символов. Cloudflare Workers: бесплатный тариф 100 000 запросов/день.
-Расширение кэширует переводы локально, так что реальное число запросов
-заметно ниже числа реплик.
+Google Cloud Translation: first 500,000 characters/month free, then about $20 per
+1M characters. Cloudflare Workers: free tier 100,000 requests/day. The extension
+caches translations locally, so the real number of requests is well below the
+number of subtitle lines.
 
-## Безопасность и защита от расходов (важно для публичного воркера)
+## Keep spending under control
 
-Если твой воркер используется как **дефолтный для всех пользователей**, через
-него идёт чужой трафик и расходы на твой Google-ключ. Прими меры:
+Set a budget and quota in Google Cloud:
+1. Billing → **Budgets & alerts** — set a monthly budget with alerts.
+2. APIs & Services → Cloud Translation API → **Quotas** — cap characters/day.
 
-1. **Бюджетный лимит и квоты в Google Cloud** — самое надёжное. Billing →
-   Budgets & alerts: задай месячный бюджет с алертами. Дополнительно: APIs &
-   Services → Cloud Translation API → Quotas — ограничь символы/сутки. Это
-   жёстко ограничит расходы при любом абузе.
-2. **Сузить CORS до ID опубликованного расширения.** Сейчас воркер пускает любой
-   `chrome-extension://`-origin. После публикации в Web Store замени проверку в
-   `worker.js` на конкретный origin:
-   ```js
-   const ALLOWED_ORIGIN = "chrome-extension://<EXTENSION_ID>";
-   // origin === ALLOWED_ORIGIN вместо startsWith(...)
-   ```
-   Учти: заголовок Origin можно подделать вне браузера, поэтому CORS — это не
-   полная защита, а только отсечение «случайного» трафика. Главный предохранитель
-   от расходов — пункт 1 (бюджет/квоты).
-3. **(Опционально) общий токен.** Можно зашить в расширение секретный заголовок и
-   проверять его в воркере — отсечёт примитивный абуз. Токен извлекаем из кода,
-   поэтому это слабая мера; комбинируй с rate-limit и квотами.
+This hard-limits spending in case of abuse. If you ever expose the worker to more
+than just yourself, also consider tightening CORS in `worker.js` from any
+`chrome-extension://` origin to a specific extension origin:
 
-## Опционально: постоянный кэш на стороне прокси
+```js
+const ALLOWED_ORIGIN = "chrome-extension://<EXTENSION_ID>";
+// use origin === ALLOWED_ORIGIN instead of startsWith(...)
+```
 
-Сейчас кэш живёт на стороне расширения (`chrome.storage`). Если хочешь общий
-кэш на всех пользователей — добавь Cloudflare KV namespace и кэшируй ответы по
-хэшу `target+source+text`. Это снизит расходы на Google при популярном контенте.
+Note: the Origin header can be spoofed outside a browser, so CORS only filters
+"accidental" traffic — the real safeguard against cost is the budget/quota above.
+
+## Optional: server-side cache
+
+The cache currently lives in the extension (`chrome.storage`). For a cache shared
+across users, add a Cloudflare KV namespace and store responses keyed by a hash
+of `target+source+text`. This lowers Google costs for popular content.

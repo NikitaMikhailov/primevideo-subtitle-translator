@@ -1,37 +1,38 @@
 # Changelog
 
-Формат основан на [Keep a Changelog](https://keepachangelog.com/ru/1.1.0/).
+Format based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ## [Unreleased]
 
-### Добавлено
-- Прокси по умолчанию (общий сервер) — работает «из коробки», без настройки.
-- Поле «Свой прокси-сервер» в попапе для переопределения сервера перевода.
-- Горячая клавиша **Alt+Shift+S** — вкл/выкл перевода, с тостом ON/OFF на экране.
-- CI на GitHub Actions: `node --check` всех скриптов + валидация `manifest.json`.
-- Документация: `docs/DEVELOPMENT.md`, раздел безопасности/расходов в
-  `backend/README.md`, `LICENSE` (MIT), `CHANGELOG.md`.
+### Added
+- Keyboard shortcut **Alt+Shift+S** to toggle translation on/off, with an
+  on-screen ON/OFF toast.
+- Options page with a "Translation server URL" field and an inline step-by-step
+  self-hosting guide.
+- GitHub Actions CI: `node --check` on all scripts + `manifest.json` validation.
+- `scripts/build.sh` to produce `dist/extension.zip`; `docs/PUBLISHING.md`,
+  `docs/DEVELOPMENT.md`, `LICENSE` (MIT), `CHANGELOG.md`.
 
-### Изменено
-- UI расширения, сообщения и комментарии в коде переведены на английский.
-- Убран встроенный дефолтный прокси: каждый пользователь указывает **свой**
-  сервер перевода. Если не задан — в оверлее подсказка настроить сервер.
-- Добавлена страница настроек (options) с полем сервера и встроенной пошаговой
-  инструкцией по развёртыванию своего воркера. Поле прокси убрано из попапа,
-  вместо него ссылка на настройки.
+### Changed
+- The whole project (extension UI, messages, code comments, and docs) is in
+  English.
+- Removed the built-in default proxy: each user configures **their own**
+  translation server. When none is set, the overlay prompts to configure one.
+- The proxy field moved from the popup to the options page (the popup now links
+  to it).
 
-### Исправлено
-- Полноэкранный режим: оверлей переезжает внутрь `document.fullscreenElement`,
-  иначе перевод скрывался top-layer'ом fullscreen.
-- Автоопределение языка: больше не отправляем `source:"auto"` (Google v2 его
-  отвергает) — параметр опускается.
-- Воркер обрезает (`trim`) секрет ключа на случай пробела/перевода строки.
+### Fixed
+- Fullscreen: the overlay is moved into `document.fullscreenElement`, otherwise
+  the translation was occluded by the fullscreen top layer.
+- Auto-detect: stopped sending `source:"auto"` (rejected by Google v2) — the
+  parameter is omitted instead.
+- Worker trims the API key secret in case a space/newline slipped in.
 
 ## [1.0.0]
 
-### Добавлено
-- Перевод встроенных субтитров Prime Video на лету (Chrome MV3).
-- Чтение субтитров через `MutationObserver`, оверлей перевода поверх плеера.
-- Бэкенд-прокси (Cloudflare Worker → Google Cloud Translation).
-- Постоянный кэш переводов, ретраи с backoff, health-check селекторов.
-- Настройки: язык, показ оригинала, размер шрифта.
+### Added
+- Real-time translation of Prime Video's built-in subtitles (Chrome MV3).
+- Subtitle reading via `MutationObserver`, translation overlay over the player.
+- Backend proxy (Cloudflare Worker → Google Cloud Translation).
+- Persistent translation cache, retries with backoff, selector health-check.
+- Settings: target language, show original, font size.

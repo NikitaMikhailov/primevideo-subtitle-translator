@@ -1,44 +1,43 @@
-# Политика конфиденциальности — Prime Video Subtitle Translator
+# Privacy Policy — Prime Video Subtitle Translator
 
-_Дата вступления в силу: 2026-06-11_
+_Effective date: 2026-06-11_
 
-Это расширение переводит субтитры Prime Video. Ниже — какие данные обрабатываются
-и куда они уходят.
+This extension translates Prime Video subtitles. Below is what data is processed
+and where it goes.
 
-## Какие данные обрабатываются
+## What is processed
 
-- **Текст субтитров** текущего видео. В момент показа реплики её текст
-  отправляется на прокси-сервер (Cloudflare Worker), который **вы сами
-  разворачиваете и указываете в настройках**, а тот — в Google Cloud Translation
-  API для перевода. Встроенного/общего сервера нет: текст идёт только на ваш
-  собственный сервер.
-- **Настройки** (язык перевода, размер шрифта, адрес прокси, флаги) хранятся
-  локально через `chrome.storage` и синхронизируются вашим аккаунтом Chrome.
-- **Кэш переводов** хранится локально в браузере (`chrome.storage.local`).
+- **Subtitle text** of the current video. When a cue is shown, its text is sent
+  to a proxy server (a Cloudflare Worker) that **you deploy and configure
+  yourself**, which forwards it to the Google Cloud Translation API. There is no
+  built-in or shared server: text goes only to your own server.
+- **Settings** (target language, font size, server URL, flags) are stored
+  locally via `chrome.storage` and synced through your Chrome account.
+- **Translation cache** is stored locally in the browser (`chrome.storage.local`).
 
-## Чего расширение НЕ делает
+## What the extension does NOT do
 
-- Не собирает и не передаёт персональные данные, историю просмотров, учётные
-  данные Amazon, cookies или платёжную информацию.
-- Не содержит рекламы, аналитики и трекеров.
-- Не отправляет данные никому, кроме указанного вами адреса прокси.
+- Does not collect or transmit personal data, browsing history, Amazon
+  credentials, cookies, or payment information.
+- Contains no ads, analytics, or trackers.
+- Sends data to no one except the proxy URL you configure.
 
-## Передача третьим лицам
+## Third parties
 
-Текст субтитров проходит через:
-1. **Ваш прокси** (Cloudflare Worker) — который вы развернули и указали в
-   настройках. Он под вашим контролем.
-2. **Google Cloud Translation API** — обработка перевода регулируется
-   политикой Google Cloud (https://cloud.google.com/terms/).
+Subtitle text passes through:
+1. **Your proxy** (Cloudflare Worker) — which you deploy and configure. It is
+   under your control.
+2. **Google Cloud Translation API** — translation processing is governed by
+   Google Cloud's terms (https://cloud.google.com/terms/).
 
-Разработчик расширения не получает и не хранит текст ваших субтитров — данные
-идут только на ваш собственный сервер.
+The extension's author does not receive or store your subtitle text — it goes
+only to your own server.
 
-## Хранение
+## Storage
 
-Кэш и настройки остаются в вашем браузере, пока вы не удалите расширение или не
-очистите данные. Прокси по умолчанию ничего не сохраняет (stateless).
+Cache and settings stay in your browser until you remove the extension or clear
+its data. A stateless proxy stores nothing by default.
 
-## Контакт
+## Contact
 
-По вопросам конфиденциальности: mikhailov_nikita1997@icloud.com
+For privacy questions: mikhailov_nikita1997@icloud.com

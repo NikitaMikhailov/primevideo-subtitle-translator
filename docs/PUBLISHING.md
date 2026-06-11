@@ -1,27 +1,27 @@
-# Публикация в Chrome Web Store
+# Publishing to the Chrome Web Store
 
-Пошаговый план. Сборку (`dist/extension.zip`) делает `scripts/build.sh`.
+Step-by-step plan. The package (`dist/extension.zip`) is built by
+`scripts/build.sh`.
 
-## 0. Что нужно заранее
-- **Аккаунт разработчика Chrome Web Store** — разовая регистрация $5:
+## 0. Prerequisites
+- **Chrome Web Store developer account** — one-time $5 registration:
   https://chrome.google.com/webstore/devconsole
-- **Публичный URL политики конфиденциальности** (Store требует его, т.к.
-  расширение работает с текстом субтитров). Репозиторий приватный, поэтому
-  `PRIVACY.md` нужно выложить публично — например, публичный GitHub Gist или
-  любая страница. Вставишь этот URL в листинг.
-- Файл `dist/extension.zip` (собрать: `./scripts/build.sh`).
+- A **public privacy policy URL** (the Store requires one because the extension
+  handles subtitle text). If the repo is private, publish `PRIVACY.md` somewhere
+  public (e.g. a public GitHub Gist). Put that URL in the listing.
+- The `dist/extension.zip` file (build it: `./scripts/build.sh`).
 
-## 1. Скриншоты и графика
-- Минимум 1 скриншот **1280×800** (до 5). Сделай кадр плеера Prime Video с
-  переводом поверх субтитров и кадр страницы настроек.
-- Иконка 128×128 уже в пакете (`icons/icon128.png`).
-- (Опц.) промо-плитка 440×280.
+## 1. Screenshots and graphics
+- At least one **1280×800** screenshot (up to 5). Capture the Prime Video player
+  with the translation over the subtitles, and the options page.
+- The 128×128 icon is already in the package (`icons/icon128.png`).
+- (Optional) a 440×280 promo tile.
 
-## 2. Тексты листинга (готово к вставке, EN)
+## 2. Listing copy (ready to paste)
 
 **Name:** `Prime Video Subtitle Translator`
 
-**Summary (≤132 символов):**
+**Summary (≤132 chars):**
 `Translate Prime Video subtitles on the fly. Bring your own Google Cloud Translation server. No ads, no trackers.`
 
 **Description:**
@@ -51,32 +51,33 @@ Features
 Note: works only with text (DOM) subtitles, not image-based ones.
 ```
 
-**Category:** Tools (или Productivity)
+**Category:** Tools (or Productivity)
 **Language:** English
 
-## 3. Privacy / permissions (вкладка Privacy в консоли)
+## 3. Privacy / permissions (Privacy tab in the console)
 
 **Single purpose:**
 `Translate Prime Video's on-screen subtitles into another language in real time.`
 
-**Обоснование прав:**
-- `storage` — хранит настройки (язык, размер шрифта, адрес сервера) и локальный
-  кэш переводов.
-- host `https://*.workers.dev/*` — отправляет текст субтитра на ваш собственный
-  Cloudflare Worker для перевода.
-- content script на `https://www.primevideo.com/*` — читает субтитры на экране и
-  рисует оверлей с переводом.
-- `commands` — горячая клавиша вкл/выкл.
+**Permission justifications:**
+- `storage` — stores settings (language, font size, server URL) and a local
+  translation cache.
+- host `https://*.workers.dev/*` — sends subtitle text to your own Cloudflare
+  Worker for translation.
+- content script on `https://www.primevideo.com/*` — reads on-screen subtitles
+  and renders the translation overlay.
+- `commands` — keyboard shortcut to toggle on/off.
 
-**Data usage (что отметить):**
-- Расширение **не** собирает персональные данные, историю, учётные данные.
-- Текст субтитров передаётся **только** на указанный пользователем сервер
-  перевода. Нет аналитики, рекламы, удалённого кода.
-- Укажи публичный URL `PRIVACY.md`.
+**Data usage (what to declare):**
+- The extension does **not** collect personal data, history, or credentials.
+- Subtitle text is sent **only** to the user-configured translation server. No
+  analytics, ads, or remote code.
+- Provide the public `PRIVACY.md` URL.
 
-## 4. ⚠️ Заметка для ревьюера (важно)
-Без настроенного сервера расширение ничего не переводит — ревьюер может счесть
-его нерабочим. В поле **Notes to reviewer** дай тестовый воркер и шаги:
+## 4. ⚠️ Note to reviewer (important)
+Without a configured server the extension translates nothing — a reviewer may
+consider it non-functional. In the **Notes to reviewer** field, provide a test
+worker and steps:
 ```
 This extension requires a self-hosted translation proxy. To test:
 1. Open the extension options.
@@ -84,17 +85,17 @@ This extension requires a self-hosted translation proxy. To test:
 3. Open a Prime Video title, turn on subtitles (CC), play — a translated
    overlay appears over the subtitles.
 ```
-(Подставь временный URL воркера; после ревью можешь его выключить.)
+(Use a temporary worker URL; you can disable it after review.)
 
-## 5. Загрузка
-1. Console → **Add new item** → загрузи `dist/extension.zip`.
-2. Заполни листинг (раздел 2), Privacy (раздел 3), скриншоты (раздел 1).
-3. Submit for review. Ревью обычно от нескольких часов до нескольких дней.
+## 5. Upload
+1. Console → **Add new item** → upload `dist/extension.zip`.
+2. Fill in the listing (section 2), Privacy (section 3), screenshots (section 1).
+3. Submit for review. Review usually takes from a few hours to a few days.
 
-## 6. Риски (честно)
-- **ToS Amazon.** Автоматизация плеера и прокачка субтитров через сторонний
-  переводчик формально задевают условия Amazon. Store может это отклонить либо
-  потребовать правок. Это не решается кодом.
-- **Высокий порог входа.** Требование развернуть свой воркер отсекает массового
-  пользователя — это нишевый, «для технарей» продукт в текущем виде.
-- Меняешь код → подними `version` в `manifest.json`, пересобери и загрузи заново.
+## 6. Risks (honest)
+- **Amazon ToS.** Automating the player and routing subtitles through a
+  third-party translator may conflict with Amazon's terms. The Store may reject
+  it or ask for changes. This isn't something code can fix.
+- **High barrier to entry.** Requiring users to deploy their own worker rules out
+  the mass-market user — in its current form this is a niche, technical tool.
+- Change code → bump `version` in `manifest.json`, rebuild, and re-upload.

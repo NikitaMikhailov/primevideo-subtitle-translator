@@ -2,9 +2,9 @@ name = "pv-subtitle-translator"
 main = "worker.js"
 compatibility_date = "2024-11-01"
 
-# API-ключ Google НЕ хранится здесь. Он задаётся как секрет:
+# The Google API key is NOT stored here. Set it as a secret:
 #   npx wrangler secret put GOOGLE_API_KEY
 #
-# После деплоя адрес воркера будет вида:
+# After deploy the worker URL looks like:
 #   https://pv-subtitle-translator.<your-subdomain>.workers.dev
-# Этот адрес нужно вставить в настройках расширения (поле «Адрес прокси»).
+# Paste that URL into the extension options ("Translation server URL").

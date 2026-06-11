@@ -1,50 +1,51 @@
-# Разработка
+# Development
 
-## Архитектура
+## Architecture
 
 ```
-content.js ──(текст субтитра)──▶ background.js ──HTTPS──▶ Cloudflare Worker ──▶ Google Cloud Translation
-   ▲ MutationObserver                │ кэш + ретраи           │ держит API-ключ
-   └──(оверлей с переводом)──────────┘                        └ CORS только для расширения
+content.js ──(subtitle text)──▶ background.js ──HTTPS──▶ Cloudflare Worker ──▶ Google Cloud Translation
+   ▲ MutationObserver               │ cache + retries        │ holds the API key
+   └──(translation overlay)─────────┘                        └ CORS: extension only
 ```
 
-- **content.js** — через `MutationObserver` ловит изменения встроенных субтитров
-  (`.atvwebplayersdk-captions-text`), прячет их (`opacity:0`, чтобы оставались
-  читаемыми) и рисует свой оверлей с переводом. В полноэкранном режиме оверлей
-  переезжает внутрь `document.fullscreenElement`.
-- **background.js** (service worker) — шлёт текст на прокси, делает ретраи с
-  backoff и хранит постоянный кэш переводов в `chrome.storage.local`. Адрес
-  прокси берётся из настроек (`proxyUrl`); встроенного дефолта нет — если не
-  задан, перевод не выполняется и в оверлее показывается подсказка настроить
-  сервер.
-- **backend/worker.js** — прокси к Google Cloud Translation v2 (см.
+- **content.js** — uses a `MutationObserver` to catch built-in subtitle changes
+  (`.atvwebplayersdk-captions-text`), hides them (`opacity:0`, so they stay
+  readable) and renders its own translation overlay. In fullscreen the overlay is
+  moved into `document.fullscreenElement`.
+- **background.js** (service worker) — sends text to the proxy, retries with
+  backoff, and keeps a persistent translation cache in `chrome.storage.local`.
+  The proxy URL comes from settings (`proxyUrl`); there is no built-in default —
+  if unset, translation does not run and the overlay prompts to configure a
+  server.
+- **backend/worker.js** — proxy to Google Cloud Translation v2 (see
   [`../backend/README.md`](../backend/README.md)).
 
-## Карта файлов
+## File map
 
-| Файл | Назначение |
-|------|------------|
-| `manifest.json` | Манифест MV3 |
-| `content.js` | Чтение субтитров, оверлей, observer'ы |
-| `background.js` | Прокси-вызовы, кэш, ретраи |
-| `overlay.css` | Стиль оверлея перевода |
-| `popup.html/.css/.js` | Настройки |
-| `icons/` | Иконки 16/48/128 |
-| `backend/worker.js` | Cloudflare Worker (прокси) |
-| `backend/wrangler.toml` | Конфиг деплоя воркера |
+| File | Purpose |
+|------|---------|
+| `manifest.json` | MV3 manifest |
+| `content.js` | Subtitle reading, overlay, observers |
+| `background.js` | Proxy calls, cache, retries |
+| `overlay.css` | Translation overlay styling |
+| `popup.html/.css/.js` | Popup settings |
+| `options.html/.js` | Options page (server URL + setup guide) |
+| `icons/` | 16/48/128 icons |
+| `backend/worker.js` | Cloudflare Worker (proxy) |
+| `backend/wrangler.toml` | Worker deploy config |
 
-## Локальная разработка
+## Local development
 
-1. `chrome://extensions/` → Developer mode → **Load unpacked** → корень репо.
-2. После правки `content.js`/`background.js`/попапа жми **↻ reload** на карточке
-   расширения (перезагрузка вкладки код расширения НЕ обновляет), затем Cmd+R на
-   вкладке с видео.
-3. Если reload не подхватывает изменения — **Remove** + **Load unpacked** заново.
+1. `chrome://extensions/` → Developer mode → **Load unpacked** → repo root.
+2. After editing `content.js`/`background.js`/popup/options, click **↻ reload**
+   on the extension card (reloading the tab does NOT reload extension code), then
+   Cmd+R on the video tab.
+3. If reload doesn't pick up changes — **Remove** + **Load unpacked** again.
 
-### Две консоли
-- **content-скрипт**: F12 на вкладке primevideo → Console.
-- **background**: `chrome://extensions/` → у расширения ссылка «service worker».
-  Здесь же можно тестировать прокси (контекст расширения проходит CORS):
+### Two consoles
+- **content script**: F12 on the primevideo tab → Console.
+- **background**: `chrome://extensions/` → the extension's "service worker" link.
+  You can also test the proxy here (the extension context passes CORS):
   ```js
   fetch('https://<your-worker>.workers.dev', {
     method:'POST', headers:{'Content-Type':'application/json'},
@@ -52,7 +53,7 @@ content.js ──(текст субтитра)──▶ background.js ──HTTP
   }).then(r=>r.text().then(t=>console.log(r.status, t)));
   ```
 
-## Диагностический сниппет (консоль страницы)
+## Diagnostic snippet (page console)
 
 ```js
 JSON.stringify({
@@ -63,19 +64,20 @@ JSON.stringify({
 }, null, 2)
 ```
 
-## Тестирование (ключевые сценарии)
+## Testing (key scenarios)
 
-| Сценарий | Ожидание |
+| Scenario | Expected |
 |----------|----------|
-| Смена языка в попапе на лету | Следующая реплика — на новом языке |
-| Полноэкранный режим | Перевод виден (оверлей внутри fullscreen-элемента) |
-| Переход на следующий эпизод | Перевод продолжает работать без перезагрузки |
-| CC выключены | Оверлей пуст; через ~25с предупреждение health-check в консоли |
-| Прокси недоступен / 429 | Показывается оригинал; ретраи с backoff, без шторма запросов |
-| Перемотка на повтор | Мгновенно из кэша, без новых запросов |
+| Change language in the popup live | Next cue is in the new language |
+| Fullscreen | Translation visible (overlay inside the fullscreen element) |
+| Next episode | Translation keeps working without a reload |
+| CC turned off | Overlay empty; ~25s health-check warning in the console |
+| Proxy down / 429 | Original shown; retries with backoff, no request storm |
+| Seek to a repeat | Instant from cache, no new requests |
 
-## Устойчивость к изменениям Amazon
+## Resilience to Amazon changes
 
-Классы вида `f7j034j` обфусцированы и меняются между релизами. Код опирается на
-стабильный `atvwebplayersdk-captions-text`. Если разметка изменится — в консоли
-появится предупреждение health-check; обнови `CAPTION_SELECTOR` в `content.js`.
+Classes like `f7j034j` are obfuscated and change between releases. The code
+relies on the stable `atvwebplayersdk-captions-text`. If the markup changes, a
+health-check warning appears in the console — update `CAPTION_SELECTOR` in
+`content.js`.

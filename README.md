@@ -1,71 +1,77 @@
 # Prime Video Subtitle Translator
 
-Chrome-расширение (Manifest V3), которое переводит встроенные субтитры Prime Video
-на лету и показывает перевод поверх плеера. Без рекламы и трекеров.
+A Chrome extension (Manifest V3) that translates Prime Video's built-in
+subtitles in real time and shows the translation over the player. No ads, no
+trackers.
 
-Расширение переводит **уже включённую** дорожку субтитров (CC) — распознавания
-речи из звука нет.
+It translates the subtitle track you **already turn on** in the player (CC) — it
+does not transcribe audio.
 
-![иконка](icons/icon128.png)
+![icon](icons/icon128.png)
 
-## Установка (из исходников)
+## How it works
 
-1. Скачай/клонируй репозиторий.
-2. Открой `chrome://extensions/` и включи **Developer mode** (вверху справа).
-3. Нажми **Load unpacked** и выбери корневую папку репозитория.
-4. Иконка расширения появится на панели Chrome.
+Translation runs through a small proxy (a Cloudflare Worker) that holds a Google
+Cloud Translation API key, so the key never ships inside the extension. There is
+**no built-in server** — you deploy your own worker and paste its URL in the
+extension options. This keeps translation costs on your own account and under
+your control.
 
-## Использование
+## Install (from source)
 
-1. Открой видео на https://www.primevideo.com/.
-2. Включи субтитры (**CC**) в самом плеере — любую доступную дорожку.
-3. Кликни иконку расширения и выбери язык перевода (по умолчанию русский).
-4. Перевод появится поверх оригинальных субтитров, в том числе в полноэкранном
-   режиме.
+1. Clone or download this repository.
+2. Open `chrome://extensions/` and enable **Developer mode** (top right).
+3. Click **Load unpacked** and select the repository root folder.
+4. The extension icon appears in the Chrome toolbar.
 
-> Если только что установил расширение — **перезагрузи вкладку** с видео, иначе
-> content-скрипт в неё не внедрится.
+## Set up your translation server (required)
 
-## Настройки (попап)
+Open the extension options (popup → **Self-hosting & advanced settings**) and
+follow the built-in guide, or see [`backend/README.md`](backend/README.md). In
+short:
 
-| Настройка | Что делает |
-|-----------|------------|
-| Включить перевод | Глобальный вкл/выкл |
-| Язык перевода | Целевой язык |
-| Показывать оригинал | Дублировать исходный текст под переводом |
-| Размер шрифта | Размер текста перевода |
-| Свой прокси-сервер | На странице настроек: адрес твоего воркера (обязательно для работы) |
+1. Get a Google Cloud Translation API key (enable the API, create a key).
+2. Deploy the Cloudflare Worker from [`backend/`](backend) with `wrangler`.
+3. Paste the worker URL into the options.
 
-## Сервер перевода (обязательно настроить)
+## Usage
 
-Перевод выполняется не в браузере, а на прокси-сервере (Cloudflare Worker →
-Google Cloud Translation), который держит API-ключ. Так ключ не попадает в код
-расширения.
+1. Open a title on https://www.primevideo.com/.
+2. Turn on subtitles (**CC**) in the player — any available track.
+3. Click the extension icon, pick your target language.
+4. The translation appears over the original subtitles, including in fullscreen.
 
-Встроенного сервера **нет** — каждый пользователь разворачивает свой воркер и
-указывает его адрес в настройках расширения (страница options). Это держит
-расходы Google на твоём аккаунте и под твоим контролем. Пошаговая инструкция
-встроена в страницу настроек расширения и продублирована в
-[`backend/README.md`](backend/README.md).
+> Just installed the extension? **Reload the video tab** — the content script
+> only injects on page load.
 
-Текст текущего субтитра отправляется на указанный сервер для перевода.
-Подробности — [`PRIVACY.md`](PRIVACY.md).
+Toggle translation on/off any time with **Alt+Shift+S**.
 
-## Документация
+## Settings
 
-- [`backend/README.md`](backend/README.md) — развернуть свой прокси-сервер.
-- [`docs/DEVELOPMENT.md`](docs/DEVELOPMENT.md) — архитектура, карта файлов,
-  локальная разработка и тестирование.
-- [`PRIVACY.md`](PRIVACY.md) — политика конфиденциальности.
-- [`CHANGELOG.md`](CHANGELOG.md) — история изменений.
+| Setting | What it does |
+|---------|--------------|
+| Enable translation | Global on/off (also Alt+Shift+S) |
+| Translate to | Target language |
+| Show original | Show the source text under the translation |
+| Font size | Translation text size |
+| Translation server URL | In the options page: your worker URL (required) |
 
-## Ограничения
+## Documentation
 
-- Работает только с текстовыми (DOM) субтитрами; «вшитые» в видеоряд как
-  картинка — перевести нельзя.
-- Автоматизация Prime Video и прокачка субтитров через сторонний переводчик
-  формально задевают ToS Amazon — учитывай это при публикации.
+- [`backend/README.md`](backend/README.md) — deploy your own translation server.
+- [`docs/DEVELOPMENT.md`](docs/DEVELOPMENT.md) — architecture, file map, local
+  development and testing.
+- [`docs/PUBLISHING.md`](docs/PUBLISHING.md) — Chrome Web Store submission notes.
+- [`PRIVACY.md`](PRIVACY.md) — privacy policy.
+- [`CHANGELOG.md`](CHANGELOG.md) — change history.
 
-## Лицензия
+## Limitations
+
+- Works only with text (DOM) subtitles; image-based subtitles burned into the
+  video cannot be translated.
+- Automating Prime Video and routing subtitles through a third-party translator
+  may conflict with Amazon's Terms of Service — keep that in mind.
+
+## License
 
 [MIT](LICENSE)
