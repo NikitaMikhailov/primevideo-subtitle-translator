@@ -1,5 +1,5 @@
-// Читает встроенные субтитры Prime Video и показывает перевод поверх плеера.
-// Перевод выполняется в background.js через прокси (Google Cloud Translation).
+// Reads Prime Video's built-in subtitles and shows a translation over the player.
+// Translation runs in background.js through a proxy (Google Cloud Translation).
 
 (() => {
   "use strict";
@@ -12,7 +12,7 @@
     proxyUrl: "",
   };
 
-  // Стабильный класс веб-плеера Amazon. Запасной — по подстроке.
+  // Stable Amazon web player class; fallback by substring just in case.
   const CAPTION_SELECTOR =
     '.atvwebplayersdk-captions-text, [class*="captions-text"]';
   const CAPTION_OVERLAY_SELECTOR =
@@ -21,6 +21,8 @@
   let settings = { ...DEFAULTS };
   let overlayEl = null;
   let styleHideEl = null;
+  let toastEl = null;
+  let toastTimer = null;
   let lastSourceText = "";
   let requestSeq = 0;
 
@@ -29,12 +31,12 @@
   let rootObserver = null;
   let debounceTimer = null;
 
-  // health-check: предупреждаем в консоль, если при играющем видео долго нет
-  // субтитров (возможно, Amazon сменил разметку — нужно обновить селектор).
+  // Health-check: warn in the console if the player is playing but no subtitles
+  // are found for a while (Amazon may have changed the markup — update selector).
   let lastCaptionSeenAt = Date.now();
   let healthWarned = false;
 
-  // --- Чтение субтитров ------------------------------------------------------
+  // --- Reading subtitles -----------------------------------------------------
 
   function readCaptionText() {
     const nodes = document.querySelectorAll(CAPTION_SELECTOR);
@@ -47,7 +49,7 @@
     return lines.join("\n").trim();
   }
 
-  // --- Оверлей ---------------------------------------------------------------
+  // --- Overlay ---------------------------------------------------------------
 
   function ensureOverlay() {
     if (!overlayEl || !overlayEl.isConnected) {
@@ -59,9 +61,9 @@
     return overlayEl;
   }
 
-  // В полноэкранном режиме рендерится только fullscreen-элемент и его потомки.
-  // Оверлей в documentElement в честном fullscreen перекрывается top-layer'ом и
-  // пропадает — поэтому держим его внутри document.fullscreenElement, когда он есть.
+  // In fullscreen the browser only renders the fullscreen element and its
+  // descendants (top layer). An overlay on documentElement would be occluded
+  // and disappear — so keep it inside document.fullscreenElement when present.
   function relocateOverlay() {
     if (!overlayEl) return;
     const host = document.fullscreenElement || document.documentElement;
@@ -102,9 +104,9 @@
     }
   }
 
-  // ВАЖНО: скрываем родные субтитры через opacity:0, а НЕ visibility:hidden —
-  // innerText возвращает пустую строку для visibility:hidden/display:none, и
-  // тогда субтитр не прочитать. opacity:0 оставляет элемент отрендеренным.
+  // IMPORTANT: hide native subtitles with opacity:0, NOT visibility:hidden —
+  // innerText returns "" for visibility:hidden/display:none elements, which
+  // would make the subtitle unreadable. opacity:0 keeps the element rendered.
   function setNativeCaptionsHidden(hidden) {
     if (hidden) {
       if (!styleHideEl) {
@@ -119,7 +121,23 @@
     }
   }
 
-  // --- Перевод текущей реплики ----------------------------------------------
+  // Brief on-screen confirmation, e.g. when toggled via the keyboard shortcut.
+  function showToast(text) {
+    if (!toastEl || !toastEl.isConnected) {
+      toastEl = document.createElement("div");
+      toastEl.id = "pvst-toast";
+    }
+    const host = document.fullscreenElement || document.documentElement;
+    if (toastEl.parentElement !== host) host.appendChild(toastEl);
+    toastEl.textContent = text;
+    toastEl.style.opacity = "1";
+    if (toastTimer) clearTimeout(toastTimer);
+    toastTimer = setTimeout(() => {
+      if (toastEl) toastEl.style.opacity = "0";
+    }, 1200);
+  }
+
+  // --- Translating the current cue -------------------------------------------
 
   async function handleCaptionChange() {
     if (!settings.enabled) return;
@@ -143,15 +161,13 @@
         type: "translate",
         texts: [text],
         target: settings.target,
-        source: null, // null = автоопределение (Google v2 не принимает "auto")
+        source: null, // null = auto-detect (Google v2 does not accept "auto")
       });
-      if (seq !== requestSeq) return; // пришёл более новый субтитр
+      if (seq !== requestSeq) return; // a newer cue arrived
       if (resp && resp.ok) {
         renderOverlay(resp.translations[0], text);
-      } else if (resp && resp.code === "no_proxy_configured") {
-        renderOverlay("⚙️ Укажите адрес прокси в настройках расширения", "");
       } else {
-        renderOverlay(text, ""); // при ошибке показываем оригинал
+        renderOverlay(text, ""); // on error, show the original
       }
     } catch (e) {
       if (seq !== requestSeq) return;
@@ -164,7 +180,7 @@
     debounceTimer = setTimeout(handleCaptionChange, 120);
   }
 
-  // --- Наблюдение за DOM -----------------------------------------------------
+  // --- Observing the DOM -----------------------------------------------------
 
   function attachCaptionObserver() {
     const overlay = document.querySelector(CAPTION_OVERLAY_SELECTOR);
@@ -178,12 +194,12 @@
       subtree: true,
       characterData: true,
     });
-    scheduleHandle(); // обработать то, что уже на экране
+    scheduleHandle(); // process whatever is already on screen
     return true;
   }
 
-  // Контейнер субтитров появляется/пересоздаётся при запуске плеера —
-  // следим за всем документом, чтобы (пере)подключаться к нему.
+  // The captions container appears/recreates when the player starts — watch the
+  // whole document to (re)attach to it.
   function startRootObserver() {
     if (rootObserver) return;
     rootObserver = new MutationObserver(() => {
@@ -213,15 +229,15 @@
       ) {
         healthWarned = true;
         console.warn(
-          "[PV Subtitle Translator] Контейнер субтитров не найден 25с при играющем видео. " +
-            "Возможно, включи субтитры (CC) в плеере, либо Amazon сменил разметку — " +
-            "тогда обнови CAPTION_SELECTOR в content.js."
+          "[PV Subtitle Translator] No subtitle container found for 25s while " +
+            "playing. Turn on subtitles (CC) in the player, or Amazon changed the " +
+            "markup — update CAPTION_SELECTOR in content.js."
         );
       }
     }, 5000);
   }
 
-  // --- Состояние -------------------------------------------------------------
+  // --- State -----------------------------------------------------------------
 
   function applyEnabledState() {
     if (settings.enabled) {
@@ -252,17 +268,22 @@
         changed = true;
       }
     }
-    if (changed) {
-      applyOverlayStyle();
-      applyEnabledState();
-      lastSourceText = "";
-      scheduleHandle();
+    if (!changed) return;
+    // Visible feedback for the keyboard-shortcut toggle.
+    if ("enabled" in changes) {
+      showToast(
+        settings.enabled ? "Subtitle translation: ON" : "Subtitle translation: OFF"
+      );
     }
+    applyOverlayStyle();
+    applyEnabledState();
+    lastSourceText = "";
+    scheduleHandle();
   });
 
-  // --- Запуск ----------------------------------------------------------------
+  // --- Startup ---------------------------------------------------------------
 
-  // При входе/выходе из полноэкранного режима переносим оверлей в нужный хост.
+  // When entering/leaving fullscreen, move the overlay into the right host.
   document.addEventListener("fullscreenchange", () => {
     if (settings.enabled) relocateOverlay();
   });

@@ -1,17 +1,17 @@
-// Cloudflare Worker — прокси к Google Cloud Translation API v2.
-// Держит API-ключ в секрете (Worker Secret GOOGLE_API_KEY), чтобы он не попал
-// в код расширения. Принимает батч строк, возвращает переводы.
+// Cloudflare Worker — proxy to the Google Cloud Translation API v2.
+// Keeps the API key in a secret (Worker Secret GOOGLE_API_KEY) so it never ends
+// up in the extension code. Accepts a batch of strings, returns translations.
 //
-// Деплой: см. backend/README.md
+// Deploy: see backend/README.md
 //
-// Запрос:  POST /  { "texts": ["...", "..."], "target": "ru", "source": "en"|null }
-// Ответ:   200    { "translations": ["...", "..."] }
+// Request:  POST /  { "texts": ["...", "..."], "target": "ru", "source": "en"|null }
+// Response: 200    { "translations": ["...", "..."] }
 
 const ALLOWED_ORIGIN_PREFIX = "chrome-extension://";
 const MAX_TEXTS = 50;
-const MAX_CHARS = 5000; // суммарно за запрос, защита от злоупотреблений
+const MAX_CHARS = 5000; // total per request, abuse guard
 
-// Грубый per-IP rate limit в памяти изолята (best-effort, не строгий).
+// Rough per-IP rate limit in isolate memory (best-effort, not strict).
 const hits = new Map(); // ip -> { count, resetAt }
 const WINDOW_MS = 60_000;
 const MAX_PER_WINDOW = 600;
@@ -28,7 +28,7 @@ function rateLimited(ip) {
 }
 
 function corsHeaders(origin) {
-  // Разрешаем только наше расширение (chrome-extension://<id>).
+  // Allow only our extension (chrome-extension://<id>).
   const allow =
     origin && origin.startsWith(ALLOWED_ORIGIN_PREFIX) ? origin : "null";
   return {
@@ -75,7 +75,7 @@ export default {
 
     const texts = Array.isArray(payload.texts) ? payload.texts : null;
     const target = String(payload.target || "").trim();
-    // Google v2: для автоопределения source нужно опускать; "auto" недопустим.
+    // Google v2: omit source for auto-detection; "auto" is not a valid value.
     let source = payload.source ? String(payload.source).trim() : null;
     if (source === "auto") source = null;
 
@@ -96,7 +96,7 @@ export default {
     params.set("format", "text");
     if (source) params.set("source", source);
 
-    // .trim() на случай пробела/перевода строки, попавших в секрет при вводе.
+    // .trim() in case a space/newline slipped into the secret when it was set.
     const apiKey = (env.GOOGLE_API_KEY || "").trim();
     const gUrl =
       "https://translation.googleapis.com/language/translate/v2?key=" +

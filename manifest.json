@@ -2,8 +2,14 @@
   "manifest_version": 3,
   "name": "Prime Video Subtitle Translator",
   "version": "1.0.0",
-  "description": "Переводит встроенные субтитры Prime Video на лету через ваш собственный прокси (Google Cloud Translation).",
+  "description": "Translate Prime Video subtitles on the fly via a proxy to Google Cloud Translation.",
   "permissions": ["storage"],
+  "commands": {
+    "toggle-translation": {
+      "suggested_key": { "default": "Alt+Shift+S" },
+      "description": "Toggle subtitle translation on/off"
+    }
+  },
   "host_permissions": ["https://*.workers.dev/*"],
   "background": {
     "service_worker": "background.js"

@@ -25,7 +25,7 @@ function load() {
     els.fontSizeVal.textContent = s.fontSize;
     els.proxyUrl.value = s.proxyUrl;
     setStatus(
-      s.proxyUrl ? "Используется свой прокси" : "Используется общий сервер",
+      s.proxyUrl ? "Using custom proxy" : "Using shared server",
       s.proxyUrl ? "ok" : ""
     );
   });
@@ -55,11 +55,11 @@ els.fontSize.addEventListener("input", () => {
 els.proxyUrl.addEventListener("change", () => {
   const url = els.proxyUrl.value.trim().replace(/\/+$/, "");
   if (url && !/^https:\/\/.+/.test(url)) {
-    setStatus("Адрес должен начинаться с https://", "err");
+    setStatus("URL must start with https://", "err");
     return;
   }
   save({ proxyUrl: url });
-  setStatus(url ? "Свой прокси сохранён" : "Используется общий сервер", url ? "ok" : "");
+  setStatus(url ? "Custom proxy saved" : "Using shared server", url ? "ok" : "");
 });
 
 load();

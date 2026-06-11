@@ -1,0 +1,47 @@
+name: CI
+
+on:
+  push:
+  pull_request:
+
+jobs:
+  checks:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+
+      - name: Syntax-check extension scripts
+        run: |
+          for f in content.js background.js popup.js; do
+            echo "checking $f"
+            node --check "$f"
+          done
+
+      - name: Syntax-check worker (ES module)
+        run: node --check --input-type=module < backend/worker.js
+
+      - name: Validate manifest.json
+        run: |
+          node -e '
+            const fs = require("fs");
+            const m = JSON.parse(fs.readFileSync("manifest.json", "utf8"));
+            const fail = (msg) => { console.error("manifest:", msg); process.exit(1); };
+            if (m.manifest_version !== 3) fail("manifest_version must be 3");
+            for (const k of ["name", "version", "description"]) {
+              if (!m[k] || typeof m[k] !== "string") fail(`missing/invalid "${k}"`);
+            }
+            if (!/^\d+(\.\d+)*$/.test(m.version)) fail(`invalid version "${m.version}"`);
+            if (!m.background || !m.background.service_worker) fail("missing background.service_worker");
+            if (!Array.isArray(m.content_scripts) || !m.content_scripts.length) fail("missing content_scripts");
+            for (const ref of [m.background.service_worker, ...m.content_scripts.flatMap(c => [...(c.js||[]), ...(c.css||[])])]) {
+              if (!fs.existsSync(ref)) fail(`referenced file not found: ${ref}`);
+            }
+            for (const size of Object.values(m.icons || {})) {
+              if (!fs.existsSync(size)) fail(`icon not found: ${size}`);
+            }
+            console.log("manifest.json OK");
+          '
