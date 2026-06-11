@@ -4,6 +4,8 @@ Format based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ## [Unreleased]
 
+## [1.0.1] - 2026-06-11
+
 ### Added
 - Keyboard shortcut **Alt+Shift+S** to toggle translation on/off, with an
   on-screen ON/OFF toast.
