@@ -44,20 +44,20 @@
     </label>
 
     <label class="row col">
-      <span>Адрес прокси (Cloudflare Worker)</span>
+      <span>Свой прокси-сервер (необязательно)</span>
       <input
         type="url"
         id="proxyUrl"
-        placeholder="https://...workers.dev"
+        placeholder="по умолчанию — общий сервер"
         spellcheck="false"
       />
       <span class="status" id="proxyStatus"></span>
     </label>
 
     <p class="hint">
-      Открой видео на primevideo.com и включи субтитры в плеере (CC).
-      Перевод появится поверх них. Адрес прокси берётся из деплоя воркера
-      (см. backend/README.md).
+      Открой видео на primevideo.com и включи субтитры в плеере (CC) — перевод
+      появится поверх них. По умолчанию используется общий сервер перевода;
+      можно указать свой (см. backend/README.md).
     </p>
 
     <script src="popup.js"></script>

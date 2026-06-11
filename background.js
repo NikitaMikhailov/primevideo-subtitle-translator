@@ -44,9 +44,15 @@ function schedulePersist() {
   }, 3000);
 }
 
+// Прокси по умолчанию (общий сервер проекта). Используется, если пользователь
+// не задал свой в настройках. Свой прокси переопределяет этот адрес.
+const DEFAULT_PROXY_URL =
+  "https://pv-subtitle-translator.prtranslator.workers.dev";
+
 async function getEndpoint() {
   const { proxyUrl } = await chrome.storage.sync.get({ proxyUrl: "" });
-  return (proxyUrl || "").trim().replace(/\/+$/, "");
+  const custom = (proxyUrl || "").trim().replace(/\/+$/, "");
+  return custom || DEFAULT_PROXY_URL;
 }
 
 const sleep = (ms) => new Promise((r) => setTimeout(r, ms));

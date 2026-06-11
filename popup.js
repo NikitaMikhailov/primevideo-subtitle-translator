@@ -24,7 +24,10 @@ function load() {
     els.fontSize.value = s.fontSize;
     els.fontSizeVal.textContent = s.fontSize;
     els.proxyUrl.value = s.proxyUrl;
-    setStatus(s.proxyUrl ? "" : "Не задан — переводы не работают", s.proxyUrl ? "" : "err");
+    setStatus(
+      s.proxyUrl ? "Используется свой прокси" : "Используется общий сервер",
+      s.proxyUrl ? "ok" : ""
+    );
   });
 }
 
@@ -56,7 +59,7 @@ els.proxyUrl.addEventListener("change", () => {
     return;
   }
   save({ proxyUrl: url });
-  setStatus(url ? "Сохранено" : "Не задан — переводы не работают", url ? "ok" : "err");
+  setStatus(url ? "Свой прокси сохранён" : "Используется общий сервер", url ? "ok" : "");
 });
 
 load();
