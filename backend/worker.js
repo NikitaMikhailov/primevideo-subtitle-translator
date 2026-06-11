@@ -96,9 +96,11 @@ export default {
     params.set("format", "text");
     if (source) params.set("source", source);
 
+    // .trim() на случай пробела/перевода строки, попавших в секрет при вводе.
+    const apiKey = (env.GOOGLE_API_KEY || "").trim();
     const gUrl =
       "https://translation.googleapis.com/language/translate/v2?key=" +
-      encodeURIComponent(env.GOOGLE_API_KEY);
+      encodeURIComponent(apiKey);
 
     let gRes;
     try {
