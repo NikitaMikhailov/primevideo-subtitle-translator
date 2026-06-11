@@ -1,0 +1,65 @@
+<!DOCTYPE html>
+<html lang="ru">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Prime Video Translator</title>
+    <link rel="stylesheet" href="popup.css" />
+  </head>
+  <body>
+    <h1>Перевод субтитров</h1>
+
+    <label class="row switch">
+      <span>Включить перевод</span>
+      <input type="checkbox" id="enabled" />
+    </label>
+
+    <label class="row">
+      <span>Язык перевода</span>
+      <select id="target">
+        <option value="ru">Русский</option>
+        <option value="en">English</option>
+        <option value="es">Español</option>
+        <option value="de">Deutsch</option>
+        <option value="fr">Français</option>
+        <option value="it">Italiano</option>
+        <option value="pt">Português</option>
+        <option value="tr">Türkçe</option>
+        <option value="uk">Українська</option>
+        <option value="pl">Polski</option>
+        <option value="ja">日本語</option>
+        <option value="ko">한국어</option>
+        <option value="zh-CN">中文 (简体)</option>
+      </select>
+    </label>
+
+    <label class="row switch">
+      <span>Показывать оригинал</span>
+      <input type="checkbox" id="showOriginal" />
+    </label>
+
+    <label class="row">
+      <span>Размер шрифта: <b id="fontSizeVal">28</b>px</span>
+      <input type="range" id="fontSize" min="14" max="48" step="1" />
+    </label>
+
+    <label class="row col">
+      <span>Адрес прокси (Cloudflare Worker)</span>
+      <input
+        type="url"
+        id="proxyUrl"
+        placeholder="https://...workers.dev"
+        spellcheck="false"
+      />
+      <span class="status" id="proxyStatus"></span>
+    </label>
+
+    <p class="hint">
+      Открой видео на primevideo.com и включи субтитры в плеере (CC).
+      Перевод появится поверх них. Адрес прокси берётся из деплоя воркера
+      (см. backend/README.md).
+    </p>
+
+    <script src="popup.js"></script>
+  </body>
+</html>
