@@ -143,7 +143,7 @@
         type: "translate",
         texts: [text],
         target: settings.target,
-        source: "auto",
+        source: null, // null = автоопределение (Google v2 не принимает "auto")
       });
       if (seq !== requestSeq) return; // пришёл более новый субтитр
       if (resp && resp.ok) {

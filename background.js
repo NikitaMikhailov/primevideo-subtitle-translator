@@ -54,6 +54,9 @@ const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
 // Переводит массив строк. Возвращает массив переводов в том же порядке.
 // Уже закэшированные строки не отправляются на прокси.
 async function translateBatch(texts, target, source) {
+  // Google v2 не принимает "auto" как источник — для автоопределения параметр
+  // нужно опускать. Нормализуем "auto"/пусто к null.
+  if (!source || source === "auto") source = null;
   await loadCache();
 
   const result = new Array(texts.length);

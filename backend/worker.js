@@ -75,7 +75,9 @@ export default {
 
     const texts = Array.isArray(payload.texts) ? payload.texts : null;
     const target = String(payload.target || "").trim();
-    const source = payload.source ? String(payload.source).trim() : null;
+    // Google v2: для автоопределения source нужно опускать; "auto" недопустим.
+    let source = payload.source ? String(payload.source).trim() : null;
+    if (source === "auto") source = null;
 
     if (!texts || !texts.length || !target) {
       return json({ error: "missing_params" }, 400, origin);
