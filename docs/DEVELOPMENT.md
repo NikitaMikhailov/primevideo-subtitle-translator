@@ -75,6 +75,19 @@ JSON.stringify({
 | Proxy down / 429 | Original shown; retries with backoff, no request storm |
 | Seek to a repeat | Instant from cache, no new requests |
 
+## Releasing
+
+Releases are automated. To cut a new version:
+
+1. Bump `version` in `manifest.json`.
+2. Update `CHANGELOG.md`, commit, and push to `main`.
+3. Tag and push: `git tag vX.Y.Z && git push origin vX.Y.Z`.
+
+The `Release` workflow (`.github/workflows/release.yml`) then checks that the tag
+matches `manifest.json`, builds `dist/extension.zip`, and publishes a GitHub
+Release for the tag with the zip attached. (The tag version must equal the
+manifest version, or the workflow fails.)
+
 ## Resilience to Amazon changes
 
 Classes like `f7j034j` are obfuscated and change between releases. The code

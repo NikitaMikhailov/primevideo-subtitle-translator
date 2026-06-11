@@ -1,0 +1,42 @@
+name: Release
+
+# Push a tag like v1.2.0 → builds dist/extension.zip and publishes a GitHub
+# Release for that tag with the zip attached.
+on:
+  push:
+    tags:
+      - "v*"
+
+permissions:
+  contents: write
+
+jobs:
+  release:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+
+      - name: Verify manifest version matches the tag
+        run: |
+          MANIFEST_VERSION=$(node -e "console.log(require('./manifest.json').version)")
+          TAG_VERSION="${GITHUB_REF_NAME#v}"
+          echo "manifest.json: $MANIFEST_VERSION   tag: $TAG_VERSION"
+          if [ "$MANIFEST_VERSION" != "$TAG_VERSION" ]; then
+            echo "::error::manifest.json version ($MANIFEST_VERSION) does not match tag ($TAG_VERSION). Bump manifest.json before tagging."
+            exit 1
+          fi
+
+      - name: Build extension zip
+        run: ./scripts/build.sh
+
+      - name: Create release and attach zip
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          gh release create "$GITHUB_REF_NAME" dist/extension.zip \
+            --title "$GITHUB_REF_NAME" \
+            --generate-notes
