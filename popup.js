@@ -3,7 +3,6 @@ const DEFAULTS = {
   target: "ru",
   showOriginal: false,
   fontSize: 28,
-  proxyUrl: "",
 };
 
 const els = {
@@ -12,8 +11,7 @@ const els = {
   showOriginal: document.getElementById("showOriginal"),
   fontSize: document.getElementById("fontSize"),
   fontSizeVal: document.getElementById("fontSizeVal"),
-  proxyUrl: document.getElementById("proxyUrl"),
-  proxyStatus: document.getElementById("proxyStatus"),
+  openOptions: document.getElementById("openOptions"),
 };
 
 function load() {
@@ -23,21 +21,11 @@ function load() {
     els.showOriginal.checked = s.showOriginal;
     els.fontSize.value = s.fontSize;
     els.fontSizeVal.textContent = s.fontSize;
-    els.proxyUrl.value = s.proxyUrl;
-    setStatus(
-      s.proxyUrl ? "Using custom proxy" : "Using shared server",
-      s.proxyUrl ? "ok" : ""
-    );
   });
 }
 
 function save(patch) {
   chrome.storage.sync.set(patch);
-}
-
-function setStatus(text, cls) {
-  els.proxyStatus.textContent = text;
-  els.proxyStatus.className = "status" + (cls ? " " + cls : "");
 }
 
 els.enabled.addEventListener("change", () =>
@@ -52,14 +40,6 @@ els.fontSize.addEventListener("input", () => {
   save({ fontSize: Number(els.fontSize.value) });
 });
 
-els.proxyUrl.addEventListener("change", () => {
-  const url = els.proxyUrl.value.trim().replace(/\/+$/, "");
-  if (url && !/^https:\/\/.+/.test(url)) {
-    setStatus("URL must start with https://", "err");
-    return;
-  }
-  save({ proxyUrl: url });
-  setStatus(url ? "Custom proxy saved" : "Using shared server", url ? "ok" : "");
-});
+els.openOptions.addEventListener("click", () => chrome.runtime.openOptionsPage());
 
 load();

@@ -85,6 +85,24 @@ input[type="range"] {
   color: #ff7676;
 }
 
+.link-row {
+  display: block;
+  width: 100%;
+  text-align: left;
+  background: #2a2a45;
+  color: #c9c9e6;
+  border: 1px solid #3a3a5a;
+  border-radius: 6px;
+  padding: 8px 10px;
+  font-size: 13px;
+  cursor: pointer;
+  margin-bottom: 12px;
+}
+
+.link-row:hover {
+  background: #34345a;
+}
+
 .hint {
   font-size: 11px;
   line-height: 1.4;

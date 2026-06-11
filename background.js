@@ -8,11 +8,6 @@ const CACHE_LIMIT = 5000;
 const STORAGE_KEY = "pvst_cache";
 const MAX_RETRIES = 3;
 
-// Default proxy (the project's shared server). Used when the user has not set a
-// custom one in the options. A custom proxy overrides this address.
-const DEFAULT_PROXY_URL =
-  "https://pv-subtitle-translator.prtranslator.workers.dev";
-
 let cacheLoaded = false;
 let persistTimer = null;
 
@@ -49,10 +44,12 @@ function schedulePersist() {
   }, 3000);
 }
 
+// Returns the user-configured proxy URL, or "" if none is set. There is no
+// built-in default — each user must deploy their own worker (see the options
+// page) and paste its URL in the settings.
 async function getEndpoint() {
   const { proxyUrl } = await chrome.storage.sync.get({ proxyUrl: "" });
-  const custom = (proxyUrl || "").trim().replace(/\/+$/, "");
-  return custom || DEFAULT_PROXY_URL;
+  return (proxyUrl || "").trim().replace(/\/+$/, "");
 }
 
 const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
@@ -81,6 +78,11 @@ async function translateBatch(texts, target, source) {
   if (!missingTexts.length) return result;
 
   const endpoint = await getEndpoint();
+  if (!endpoint) {
+    const err = new Error("no_proxy_configured");
+    err.code = "no_proxy_configured";
+    throw err;
+  }
 
   let lastErr;
   for (let attempt = 0; attempt < MAX_RETRIES; attempt++) {

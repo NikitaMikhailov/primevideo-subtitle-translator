@@ -43,21 +43,14 @@
       <input type="range" id="fontSize" min="14" max="48" step="1" />
     </label>
 
-    <label class="row col">
-      <span>Custom proxy server (optional)</span>
-      <input
-        type="url"
-        id="proxyUrl"
-        placeholder="default: shared server"
-        spellcheck="false"
-      />
-      <span class="status" id="proxyStatus"></span>
-    </label>
+    <button type="button" id="openOptions" class="link-row">
+      Self-hosting &amp; advanced settings →
+    </button>
 
     <p class="hint">
-      Open a video on primevideo.com and turn on subtitles (CC) in the player —
-      the translation appears over them. A shared translation server is used by
-      default. Toggle shortcut: Alt+Shift+S.
+      First time? Open <b>Self-hosting &amp; advanced settings</b> to set up your
+      translation server. Then play a video on primevideo.com with subtitles (CC)
+      on. Toggle shortcut: Alt+Shift+S.
     </p>
 
     <script src="popup.js"></script>

@@ -14,7 +14,9 @@ content.js ──(текст субтитра)──▶ background.js ──HTTP
   переезжает внутрь `document.fullscreenElement`.
 - **background.js** (service worker) — шлёт текст на прокси, делает ретраи с
   backoff и хранит постоянный кэш переводов в `chrome.storage.local`. Адрес
-  прокси: свой из настроек, иначе `DEFAULT_PROXY_URL`.
+  прокси берётся из настроек (`proxyUrl`); встроенного дефолта нет — если не
+  задан, перевод не выполняется и в оверлее показывается подсказка настроить
+  сервер.
 - **backend/worker.js** — прокси к Google Cloud Translation v2 (см.
   [`../backend/README.md`](../backend/README.md)).
 
@@ -44,7 +46,7 @@ content.js ──(текст субтитра)──▶ background.js ──HTTP
 - **background**: `chrome://extensions/` → у расширения ссылка «service worker».
   Здесь же можно тестировать прокси (контекст расширения проходит CORS):
   ```js
-  fetch(DEFAULT_PROXY_URL || 'https://<твой>.workers.dev', {
+  fetch('https://<your-worker>.workers.dev', {
     method:'POST', headers:{'Content-Type':'application/json'},
     body: JSON.stringify({texts:['Hello world'], target:'ru'})
   }).then(r=>r.text().then(t=>console.log(r.status, t)));

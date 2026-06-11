@@ -166,6 +166,8 @@
       if (seq !== requestSeq) return; // a newer cue arrived
       if (resp && resp.ok) {
         renderOverlay(resp.translations[0], text);
+      } else if (resp && resp.code === "no_proxy_configured") {
+        renderOverlay("⚙ Set a translation server in the extension options", "");
       } else {
         renderOverlay(text, ""); // on error, show the original
       }

@@ -16,7 +16,7 @@ jobs:
 
       - name: Syntax-check extension scripts
         run: |
-          for f in content.js background.js popup.js; do
+          for f in content.js background.js popup.js options.js; do
             echo "checking $f"
             node --check "$f"
           done

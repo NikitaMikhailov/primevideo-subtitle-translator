@@ -1,0 +1,133 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Prime Video Subtitle Translator — Settings</title>
+    <style>
+      * { box-sizing: border-box; }
+      body {
+        margin: 0;
+        padding: 32px 20px 56px;
+        background: #16162a;
+        color: #f0f0f0;
+        font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Arial,
+          sans-serif;
+        line-height: 1.5;
+      }
+      .wrap { max-width: 720px; margin: 0 auto; }
+      h1 { font-size: 22px; margin: 0 0 4px; }
+      .sub { color: #a0a0c0; margin: 0 0 28px; font-size: 14px; }
+      h2 {
+        font-size: 16px;
+        margin: 32px 0 12px;
+        padding-top: 20px;
+        border-top: 1px solid #2a2a45;
+      }
+      .card { background: #1e1e38; border: 1px solid #2a2a45; border-radius: 10px; padding: 18px 20px; }
+      label.field { display: block; font-size: 14px; font-weight: 600; margin-bottom: 8px; }
+      input[type="url"] {
+        width: 100%;
+        background: #14142a;
+        color: #f0f0f0;
+        border: 1px solid #3a3a5a;
+        border-radius: 7px;
+        padding: 10px 12px;
+        font-size: 14px;
+      }
+      .status { font-size: 13px; margin-top: 8px; min-height: 16px; color: #a0a0c0; }
+      .status.ok { color: #5bd97a; }
+      .status.err { color: #ff7676; }
+      ol { padding-left: 22px; }
+      li { margin: 10px 0; }
+      code, pre {
+        font-family: "SF Mono", Menlo, Consolas, monospace;
+        font-size: 13px;
+      }
+      code { background: #2a2a45; padding: 1px 6px; border-radius: 4px; }
+      pre {
+        background: #0e0e1c;
+        border: 1px solid #2a2a45;
+        border-radius: 8px;
+        padding: 14px 16px;
+        overflow-x: auto;
+        line-height: 1.6;
+      }
+      pre code { background: none; padding: 0; }
+      a { color: #8b7cff; }
+      .note { font-size: 13px; color: #a0a0c0; }
+      .pill {
+        display: inline-block;
+        background: #2a2a45;
+        color: #c9c9e6;
+        font-size: 12px;
+        padding: 2px 9px;
+        border-radius: 20px;
+        margin-left: 6px;
+      }
+    </style>
+  </head>
+  <body>
+    <div class="wrap">
+      <h1>Prime Video Subtitle Translator</h1>
+      <p class="sub">Settings &amp; self-hosting</p>
+
+      <div class="card">
+        <label class="field" for="proxyUrl">Translation server URL <span class="pill">required</span></label>
+        <input type="url" id="proxyUrl" placeholder="https://your-worker.your-subdomain.workers.dev" spellcheck="false" />
+        <div class="status" id="proxyStatus"></div>
+        <p class="note">
+          The extension needs your own translation server to work. Follow the
+          guide below to deploy one in a few minutes, then paste its URL here.
+        </p>
+      </div>
+
+      <h2>Set up your translation server</h2>
+      <p>
+        Translation runs through a small proxy (a Cloudflare Worker) that holds a
+        Google Cloud Translation API key, so the key never ships inside the
+        extension. You run your own, so translation costs stay on your account
+        and under your control.
+      </p>
+
+      <h3>Step 1 — Get a Google Cloud Translation API key</h3>
+      <ol>
+        <li>Create a project at <a href="https://console.cloud.google.com/" target="_blank" rel="noopener">console.cloud.google.com</a>.</li>
+        <li>Enable <strong>Cloud Translation API</strong> (APIs &amp; Services → Library).</li>
+        <li>APIs &amp; Services → Credentials → <strong>Create credentials → API key</strong>.</li>
+        <li>Edit the key → <strong>API restrictions → Cloud Translation API</strong>. Leave <strong>Application restrictions = None</strong>.</li>
+        <li>Make sure <strong>billing</strong> is enabled on the project (the free tier still requires it).</li>
+      </ol>
+
+      <h3>Step 2 — Deploy the Cloudflare Worker</h3>
+      <p>Get the worker code from the repository, then in the <code>backend</code> folder:</p>
+      <pre><code>git clone https://github.com/NikitaMikhailov/primevideo-subtitle-translator
+cd primevideo-subtitle-translator/backend
+
+npx wrangler login
+npx wrangler secret put GOOGLE_API_KEY   # paste the key (hidden, no extra spaces/newline)
+npx wrangler deploy</code></pre>
+      <p>After <code>deploy</code> you get a URL like
+        <code>https://your-worker.your-subdomain.workers.dev</code>.</p>
+
+      <h3>Step 3 — Connect it</h3>
+      <p>Paste that URL into the <strong>Custom proxy server</strong> field above. Done.</p>
+
+      <h3>Cost</h3>
+      <p class="note">
+        Google Cloud Translation: first 500,000 characters/month free, then about
+        $20 per 1M characters. Cloudflare Workers: free tier 100,000 requests/day.
+        The extension caches translations locally, so real usage is much lower than
+        the number of subtitle lines.
+      </p>
+
+      <h3>Keep costs under control</h3>
+      <p class="note">
+        Set a budget and quota in Google Cloud (Billing → Budgets &amp; alerts, and
+        Cloud Translation API → Quotas) to cap spending.
+      </p>
+    </div>
+
+    <script src="options.js"></script>
+  </body>
+</html>
