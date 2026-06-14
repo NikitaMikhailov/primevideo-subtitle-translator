@@ -139,6 +139,15 @@
 
   // --- Translating the current cue -------------------------------------------
 
+  // Progressive, per-line translation. A long cue's network round-trip is no
+  // slower than a short one's, but Amazon often draws long captions in steps,
+  // so the whole-cue request used to be cancelled by churn and never rendered.
+  // Instead we split the cue into its natural lines and translate each one
+  // independently and in parallel: every line shows the original immediately
+  // (so something is always visible) and is swapped for its translation as soon
+  // as that line comes back.
+  let currentCue = { token: 0, lines: [], translations: [] };
+
   async function handleCaptionChange() {
     if (!settings.enabled) return;
 
@@ -155,26 +164,54 @@
       return;
     }
 
-    const seq = ++requestSeq;
+    const lines = text.split("\n").map((l) => l.trim()).filter(Boolean);
+    const token = ++requestSeq;
+    currentCue = {
+      token,
+      lines,
+      translations: new Array(lines.length).fill(null),
+    };
+
+    // Show the original right away, then upgrade each line as it arrives.
+    renderProgressive(token);
+    lines.forEach((line, i) => translateLine(line, token, i));
+  }
+
+  async function translateLine(line, token, idx) {
+    let translated;
     try {
       const resp = await chrome.runtime.sendMessage({
         type: "translate",
-        texts: [text],
+        texts: [line],
         target: settings.target,
         source: null, // null = auto-detect (Google v2 does not accept "auto")
       });
-      if (seq !== requestSeq) return; // a newer cue arrived
+      if (token !== requestSeq) return; // a newer cue arrived
       if (resp && resp.ok) {
-        renderOverlay(resp.translations[0], text);
+        translated = resp.translations[0];
       } else if (resp && resp.code === "no_proxy_configured") {
-        renderOverlay("⚙ Set a translation server in the extension options", "");
+        translated = "⚙ Set a translation server in the extension options";
       } else {
-        renderOverlay(text, ""); // on error, show the original
+        translated = line; // on error, keep the original
       }
     } catch (e) {
-      if (seq !== requestSeq) return;
-      renderOverlay(text, "");
+      if (token !== requestSeq) return;
+      translated = line;
     }
+    if (token !== requestSeq) return;
+    currentCue.translations[idx] = translated;
+    renderProgressive(token);
+  }
+
+  // Render the current cue: each slot shows its translation once ready,
+  // otherwise the original line as a placeholder.
+  function renderProgressive(token) {
+    if (token !== requestSeq) return;
+    const cue = currentCue;
+    const display = cue.lines.map((line, i) =>
+      cue.translations[i] != null ? cue.translations[i] : line
+    );
+    renderOverlay(display.join("\n"), cue.lines.join("\n"));
   }
 
   function scheduleHandle() {
