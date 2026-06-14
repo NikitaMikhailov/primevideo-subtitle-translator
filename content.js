@@ -143,9 +143,10 @@
   // slower than a short one's, but Amazon often draws long captions in steps,
   // so the whole-cue request used to be cancelled by churn and never rendered.
   // Instead we split the cue into its natural lines and translate each one
-  // independently and in parallel: every line shows the original immediately
-  // (so something is always visible) and is swapped for its translation as soon
-  // as that line comes back.
+  // independently and in parallel: each line is swapped in as soon as its
+  // translation comes back. Untranslated lines are NOT shown as placeholders —
+  // flashing the original text first is distracting, so a line stays hidden
+  // until its translation is ready.
   let currentCue = { token: 0, lines: [], translations: [] };
 
   async function handleCaptionChange() {
@@ -172,7 +173,7 @@
       translations: new Array(lines.length).fill(null),
     };
 
-    // Show the original right away, then upgrade each line as it arrives.
+    // Nothing is shown until the first translated line arrives.
     renderProgressive(token);
     lines.forEach((line, i) => translateLine(line, token, i));
   }
@@ -203,14 +204,13 @@
     renderProgressive(token);
   }
 
-  // Render the current cue: each slot shows its translation once ready,
-  // otherwise the original line as a placeholder.
+  // Render the current cue: only lines whose translation is ready are shown.
+  // Untranslated lines are omitted (not shown as the original) so the original
+  // text never flashes before the translation arrives.
   function renderProgressive(token) {
     if (token !== requestSeq) return;
     const cue = currentCue;
-    const display = cue.lines.map((line, i) =>
-      cue.translations[i] != null ? cue.translations[i] : line
-    );
+    const display = cue.translations.filter((t) => t != null);
     renderOverlay(display.join("\n"), cue.lines.join("\n"));
   }
 
