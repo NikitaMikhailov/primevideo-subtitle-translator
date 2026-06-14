@@ -4,6 +4,13 @@ Format based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ## [Unreleased]
 
+## [1.1.1] - 2026-06-14
+
+### Fixed
+- Stop flashing the **original** subtitle as a placeholder before its
+  translation arrives. Each line now stays hidden until its translation is
+  ready, instead of briefly showing the untranslated text.
+
 ## [1.1.0] - 2026-06-14
 
 ### Changed
