@@ -4,6 +4,15 @@ Format based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ## [Unreleased]
 
+## [1.1.0] - 2026-06-14
+
+### Changed
+- Subtitles are now translated **per line, progressively**. Each cue is split
+  into its natural lines, every line is translated independently and in
+  parallel, and the overlay shows the original immediately then swaps in each
+  translation as it arrives. Long captions that used to disappear before their
+  translation rendered now always show something right away.
+
 ## [1.0.1] - 2026-06-11
 
 ### Added
